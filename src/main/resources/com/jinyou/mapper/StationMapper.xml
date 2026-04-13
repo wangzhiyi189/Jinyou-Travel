@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jinyou.mapper.StationMapper">
+    <!--    动态sql-->
+    <select id="list" resultType="com.jinyou.pojo.Station">
+        select * from station
+        <where>
+            <if test="stationName != null and stationName != ''">
+                title stationName concat('%', #{stationName}, '%')
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            and create_user = #{userId}
+        </where>
+        ORDER BY sort DESC
+    </select>
+</mapper>

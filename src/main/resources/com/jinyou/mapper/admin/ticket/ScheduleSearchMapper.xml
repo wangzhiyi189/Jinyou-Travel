@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+    车次搜索表 Mapper
+    表：bus_schedule_search
+    实体：com.jinyou.pojo.admin.ticket.ScheduleSearch
+    作用：小程序查询车票、主表数据同步展示
+-->
+<mapper namespace="com.jinyou.mapper.admin.ticket.ScheduleSearchMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="BaseResultMap" type="com.jinyou.pojo.admin.ticket.ScheduleSearch">
+        <id column="schedule_search_id" property="scheduleSearchId" jdbcType="BIGINT"/>
+        <result column="schedule_id" property="scheduleId" jdbcType="BIGINT"/>
+        <result column="line_id" property="lineId" jdbcType="BIGINT"/>
+        <result column="start_city" property="startCity" jdbcType="VARCHAR"/>
+        <result column="end_city" property="endCity" jdbcType="VARCHAR"/>
+        <result column="depart_time" property="departTime" jdbcType="TIMESTAMP"/>
+        <result column="arrive_time" property="arriveTime" jdbcType="TIMESTAMP"/>
+        <result column="duration" property="duration" jdbcType="INTEGER"/>
+        <result column="price" property="price" jdbcType="DECIMAL"/>
+        <result column="seat_remaining" property="seatRemaining" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- ==============================================
+         1. 基础查询
+       ============================================== -->
+
+    <!-- 根据主键查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM bus_schedule_search WHERE schedule_search_id = #{scheduleSearchId}
+    </select>
+
+    <!-- 根据 schedule_id 查询（主表ID） -->
+    <select id="selectByScheduleId" resultMap="BaseResultMap">
+        SELECT * FROM bus_schedule_search WHERE schedule_id = #{scheduleId}
+    </select>
+
+    <!-- 小程序查询：出发城市 + 到达城市 + 日期 -->
+    <select id="searchByCityAndDate" resultMap="BaseResultMap">
+        SELECT
+        se.*,
+        s.seat_remaining
+        FROM bus_schedule_search se
+        JOIN bus_schedule s ON se.schedule_id = s.schedule_id
+        <where>
+            <if test="startCity != null and startCity != ''">
+                AND se.start_city LIKE CONCAT('%',#{startCity},'%')
+            </if>
+
+            <if test="endCity != null and endCity != ''">
+                AND se.end_city LIKE CONCAT('%',#{endCity},'%')
+            </if>
+
+            <if test="departDate != null and departDate != ''">
+                AND DATE(se.depart_time) = STR_TO_DATE(#{departDate},'%Y-%m-%d')
+            </if>
+
+            AND se.status = 1
+            <!-- 测试时先注释掉这一行！！！ -->
+             AND se.depart_time >= NOW()
+        </where>
+        ORDER BY se.depart_time ASC
+    </select>
+
+    <!-- ==============================================
+         2. 新增 / 同步（主表数据同步到搜索表）
+       ============================================== -->
+
+    <!-- 新增 -->
+    <insert id="insert">
+        INSERT INTO bus_schedule_search
+        (schedule_id, line_id, start_city, end_city, depart_time, arrive_time,
+        duration , price, seat_remaining, status)
+        VALUES
+        (#{scheduleId}, #{lineId}, #{startCity}, #{endCity},
+         #{departTime}, #{arriveTime},#{duration},
+        #{price}, #{seatRemaining}, #{status})
+    </insert>
+    <!-- 修改专用：后台更新车次信息调用 -->
+    <update id="updateSync">
+        UPDATE bus_schedule_search
+        <set>
+            depart_time    = #{departTime},
+            line_id        = #{lineId},
+            start_city     = #{startCity},
+            end_city       = #{endCity},
+            duration       = #{duration},
+            arrive_time    = #{arriveTime},
+            price          = #{price},
+            status         = #{status}
+        </set>
+        <!--根据车次id修改搜索表-->
+        WHERE schedule_id = #{scheduleId}
+    </update>
+    <!-- 同步覆盖：存在则更新，不存在则插入（推荐） -->
+    <insert id="replaceSync">
+        REPLACE INTO bus_schedule_search
+        (schedule_id, line_id, start_city, end_city,
+         depart_time, arrive_time,
+        price, seat_remaining, status)
+        VALUES
+        (#{scheduleId}, #{lineId}, #{startCity}, #{endCity},
+         #{departTime}, #{arriveTime},
+        #{price}, #{seatRemaining}, #{status})
+    </insert>
+
+    <!-- ==============================================
+         3. 修改（余票、票价、状态）
+       ============================================== -->
+
+    <!-- 更新余票：用户购票后调用 -->
+    <update id="updateSeatRemaining">
+        UPDATE bus_schedule_search
+        SET seat_remaining = #{seatRemaining}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+    <!-- 更新票价 -->
+    <update id="updatePrice">
+        UPDATE bus_schedule_search
+        SET price = #{price}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+    <!-- 更新状态 1正常 0禁用 -->
+    <update id="updateStatus">
+        UPDATE bus_schedule_search
+        SET status = #{status}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+    <!-- ==============================================
+         4. 删除
+       ============================================== -->
+
+    <!-- 根据主键删除 -->
+    <delete id="deleteById">
+        DELETE FROM bus_schedule_search WHERE schedule_search_id = #{scheduleSearchId}
+    </delete>
+
+    <!-- 根据 schedule_id 删除 -->
+    <delete id="deleteByScheduleId">
+        DELETE FROM bus_schedule_search WHERE schedule_id = #{scheduleId}
+    </delete>
+
+    <!-- 定时任务：删除30天前历史数据 -->
+    <delete id="deleteOldDataBefore30Days">
+        DELETE FROM bus_schedule_search
+        WHERE depart_time &lt; DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+    </delete>
+
+</mapper>

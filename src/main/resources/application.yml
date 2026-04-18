@@ -1,19 +1,23 @@
-spring :
+spring:
   datasource:
-    driver-class-name: com.mysql.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/jinyou_travel
     username: root
     password: 123456789
+
 server:
   port: 8081
-mybatis:
-    configuration:
-        map-underscore-to-camel-case : true # 开启驼峰命名和下划线命名的自动转换
-        type-handlers-package: org.apache.ibatis.type
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true  # 驼峰转换
+  type-handlers-package: org.apache.ibatis.type
+
 aliyun:
   oss:
-    accessKeyId: ${ALIYUN_OSS_ACCESS_KEY_ID}
-    accessKeySecret: ${ALIYUN_OSS_ACCESS_KEY_SECRET}
+    accessKeyId: LTAI5t6KpdUTdeKyjXT1PVo5
+    accessKeySecret: LQq8YoGVlNtOSGye9unTkS781ALNvn
     endpoint: https://oss-cn-beijing.aliyuncs.com
     bucketName: jinyou-travel
     region: cn-beijing

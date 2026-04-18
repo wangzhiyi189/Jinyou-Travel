@@ -19,6 +19,8 @@ public class LoginInterceptor implements HandlerInterceptor {
         String token = authHeader.substring(7);
         try {
             Map<String, Object> claims = JwtUtil.parseToken(token);
+//            用户id强转Long
+            claims.put("id", Long.valueOf(claims.get("id").toString()));
 //            把业务数据存储到ThreadLocal中
             ThreadLocalUtil.set(claims);
             return true;

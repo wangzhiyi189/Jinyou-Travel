@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jinyou.mapper.admin.ticket.ScheduleMapper">
+
+    <!-- 你原来的代码不动 -->
+    <select id="list" resultType="com.jinyou.pojo.admin.ticket.Schedule">
+        select * from bus_schedule
+        <where>
+            <if test="query.scheduleName != null and query.scheduleName != ''">
+                and schedule_name like concat('%', #{query.scheduleName}, '%')
+            </if>
+            <if test="query.status != null">
+                and status = #{query.status}
+            </if>
+            and create_user = #{userId}
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 新增：专门统计车次总数，不关联站点，所以不会膨胀 -->
+    <select id="countListVO" resultType="java.lang.Integer">
+        SELECT COUNT(schedule_id)
+        FROM bus_schedule
+        LEFT JOIN line ON bus_schedule.line_id = line.line_id
+        <where>
+            <if test="query.scheduleName != null and query.scheduleName != ''">
+                and bus_schedule.schedule_name like concat('%', #{query.scheduleName}, '%')
+            </if>
+            <if test="query.status != null">
+                and bus_schedule.status = #{query.status}
+            </if>
+            and bus_schedule.create_user = #{userId}
+        </where>
+    </select>
+
+    <resultMap id="ScheduleVOResultMap" type="com.jinyou.vo.admin.ScheduleVO">
+        <id column="schedule_id" property="scheduleId"/>
+        <result column="create_user" property="createUser"/>
+        <result column="schedule_name" property="scheduleName"/>
+        <result column="line_id" property="lineId"/>
+        <result column="depart_time" property="departTime"/>
+        <result column="arrive_time" property="arriveTime"/>
+        <result column="duration" property="duration"/>
+        <result column="plate_number" property="plateNumber"/>
+        <result column="vehicle_type" property="vehicleType"/>
+        <result column="price" property="price"/>
+        <result column="seat_total" property="seatTotal"/>
+        <result column="seat_remaining" property="seatRemaining"/>
+        <result column="status" property="status"/>
+        <result column="is_recommend" property="isRecommend"/>
+        <result column="sort" property="sort"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="remark" property="remark"/>
+        <result column="start_city" property="startCity"/>
+        <result column="end_city" property="endCity"/>
+        <collection property="stationList" ofType="com.jinyou.vo.admin.ScheduleVO$StationInfo">
+            <id column="station_id" property="stationId"/>
+            <result column="station_name" property="stationName"/>
+            <result column="lng" property="lng"/>
+            <result column="lat" property="lat"/>
+            <result column="address" property="address"/>
+        </collection>
+    </resultMap>
+
+    <select id="listVO" resultMap="ScheduleVOResultMap">
+        SELECT
+        b.*,
+        line.start_city,
+        line.end_city,
+        station.station_id,
+        station.station_name,
+        station.lng,
+        station.lat,
+        station.address
+        FROM
+        -- 核心：这里先把子查询【只查车次】，分页插件只会统计这里！
+        (SELECT DISTINCT bus_schedule.*
+        FROM bus_schedule
+        LEFT JOIN line ON bus_schedule.line_id = line.line_id
+        <where>
+            <if test="query.scheduleName != null and query.scheduleName != ''">
+                and bus_schedule.schedule_name like concat('%', #{query.scheduleName}, '%')
+            </if>
+            <if test="query.status != null">
+                and bus_schedule.status = #{query.status}
+            </if>
+            and bus_schedule.create_user = #{userId}
+        </where>
+        ) b
+
+        LEFT JOIN line ON b.line_id = line.line_id
+        LEFT JOIN JSON_TABLE(
+        line.station_list,
+        '$[*]' COLUMNS (
+        station_id INT PATH '$',
+        idx FOR ORDINALITY
+        )
+        ) AS station_idx ON TRUE
+        LEFT JOIN station ON station_idx.station_id = station.station_id
+
+        ORDER BY b.create_time DESC, station_idx.idx
+    </select>
+
+     <!--添加车次-->
+    <insert id="add" useGeneratedKeys="true" keyProperty="scheduleId">
+        INSERT INTO bus_schedule
+        (schedule_name,
+        line_id,
+        depart_time,
+        arrive_time,
+        duration,
+        plate_number,
+        vehicle_type,
+        price,
+        seat_total,
+        seat_remaining,
+        status,
+        is_recommend,
+        create_time,
+        update_time,
+        remark,
+        create_user)
+        VALUES
+        (#{scheduleName},
+        #{lineId},
+        #{departTime},
+        #{arriveTime},
+        #{duration},
+        #{plateNumber},
+        #{vehicleType},
+        #{price},
+        #{seatTotal},
+        #{seatRemaining},
+        #{status},
+        #{isRecommend},
+        #{createTime},
+        #{updateTime},
+        #{remark},
+        #{createUser})
+    </insert>
+</mapper>

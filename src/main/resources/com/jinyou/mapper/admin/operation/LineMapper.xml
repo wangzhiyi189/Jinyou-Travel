@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jinyou.mapper.admin.operation.LineMapper">
+
+    <select id="list" resultType="com.jinyou.pojo.admin.operation.Line">
+        select * from line
+        <where>
+            <!-- 线路名称 模糊查询 -->
+            <if test="query.lineName != null and query.lineName != ''">
+                and line_name like concat('%', #{query.lineName}, '%')
+            </if>
+
+            <!-- startCity JSON 数组包含查询 -->
+            <if test="query.startCity != null and query.startCity != ''">
+                and start_city like concat('%', #{query.startCity}, '%')
+            </if>
+
+            <!-- endCity JSON 数组包含查询 -->
+            <if test="query.endCity != null and query.endCity != ''">
+                and end_city like concat('%', #{query.endCity}, '%')
+            </if>
+
+            <!-- 状态 -->
+            <if test="query.status != null">
+                and status = #{query.status}
+            </if>
+
+            <!-- 当前登录人ID -->
+            and create_user = #{userId}
+        </where>
+        ORDER BY create_time DESC
+    </select>
+    <select id="listAll" resultType="com.jinyou.pojo.admin.operation.Line">
+        select * from line
+        where create_user = #{userId}
+        and status = 1
+    </select>
+
+    <!-- 根据ID查询线路 -->
+    <select id="selectById" resultType="com.jinyou.pojo.admin.operation.Line">
+        SELECT * FROM line WHERE line_id = #{lineId}
+    </select>
+</mapper>

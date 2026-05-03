@@ -43,16 +43,17 @@
     <select id="searchByCityAndDate" resultMap="BaseResultMap">
         SELECT
         se.*,
-        s.seat_remaining
+        s.seat_remaining AS seat_remaining
         FROM bus_schedule_search se
         JOIN bus_schedule s ON se.schedule_id = s.schedule_id
         <where>
+            <!-- 用 JSON_CONTAINS 匹配数组中的元素 -->
             <if test="startCity != null and startCity != ''">
-                AND se.start_city LIKE CONCAT('%',#{startCity},'%')
+                AND JSON_CONTAINS(se.start_city, CONCAT('"', #{startCity}, '"'))
             </if>
 
             <if test="endCity != null and endCity != ''">
-                AND se.end_city LIKE CONCAT('%',#{endCity},'%')
+                AND JSON_CONTAINS(se.end_city, CONCAT('"', #{endCity}, '"'))
             </if>
 
             <if test="departDate != null and departDate != ''">
@@ -60,12 +61,11 @@
             </if>
 
             AND se.status = 1
-            <!-- 测试时先注释掉这一行！！！ -->
-             AND se.depart_time >= NOW()
+            <!-- 测试时先注释掉，避免被时间过滤掉 -->
+<!--             AND se.depart_time >= NOW()-->
         </where>
         ORDER BY se.depart_time ASC
     </select>
-
     <!-- ==============================================
          2. 新增 / 同步（主表数据同步到搜索表）
        ============================================== -->
@@ -91,6 +91,7 @@
             duration       = #{duration},
             arrive_time    = #{arriveTime},
             price          = #{price},
+            seat_remaining = #{seatRemaining},
             status         = #{status}
         </set>
         <!--根据车次id修改搜索表-->
@@ -118,7 +119,18 @@
         SET seat_remaining = #{seatRemaining}
         WHERE schedule_id = #{scheduleId}
     </update>
-
+    <!--    只修改票价-->
+    <update id="decreaseSeatRemaining">
+        UPDATE bus_schedule_search
+        SET seat_remaining = seat_remaining - #{ticketCount}
+        WHERE schedule_id = #{scheduleId}
+        AND seat_remaining >= #{ticketCount}
+    </update>
+    <update id="increaseSeatRemaining">
+        UPDATE bus_schedule_search
+        SET seat_remaining = seat_remaining + #{ticketCount}
+        WHERE schedule_id = #{scheduleId}
+    </update>
     <!-- 更新票价 -->
     <update id="updatePrice">
         UPDATE bus_schedule_search
@@ -139,7 +151,7 @@
 
     <!-- 根据主键删除 -->
     <delete id="deleteById">
-        DELETE FROM bus_schedule_search WHERE schedule_search_id = #{scheduleSearchId}
+        DELETE FROM bus_schedule_search WHERE schedule_id = #{scheduleSearchId}
     </delete>
 
     <!-- 根据 schedule_id 删除 -->
@@ -152,5 +164,12 @@
         DELETE FROM bus_schedule_search
         WHERE depart_time &lt; DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     </delete>
-
+    <!--    根据id批量删除-->
+    <delete id="deleteBatchByIds">
+        DELETE FROM bus_schedule_search
+        WHERE schedule_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
 </mapper>

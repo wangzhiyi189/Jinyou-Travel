@@ -21,7 +21,6 @@ public class Information {
     private UserService userService;
     @GetMapping("/info")
     public Result<User> userInfo(){
-        System.out.println("text");
         Map<String,Object> map = ThreadLocalUtil.get();
         String username = (String) map.get("username");
         User loginUser = userService.findByUsername(username);

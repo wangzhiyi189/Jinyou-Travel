@@ -11,4 +11,9 @@
         select * from top_banner
         where status = 1
     </select>
+    <select id="listPopular" resultType="com.jinyou.pojo.admin.operation.Line">
+        select * from line
+        where status = 1
+        and is_popular = 1
+    </select>
 </mapper>

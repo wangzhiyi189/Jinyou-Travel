@@ -57,6 +57,10 @@ public class StationServiceImpl implements StationService {
     @Override
     public List<Station> listByStationIds(Integer[] stationIds) {
         return stationMapper.listByStationIds(stationIds);
+    }
 
+    @Override
+    public Station getDetail(Long stationId) {
+        return stationMapper.getDetail(stationId);
     }
 }

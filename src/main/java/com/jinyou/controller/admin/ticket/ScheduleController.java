@@ -15,7 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/schedule")
 @Validated
-public class ScheduleOontroller {
+public class ScheduleController {
     @Autowired
     private ScheduleService scheduleService;
     @GetMapping
@@ -31,7 +31,7 @@ public class ScheduleOontroller {
     }
     @PostMapping("add")
     public Result<String> add(@RequestBody @Validated Schedule schedule){
-        scheduleService.add(schedule);
+        scheduleService.addAndFill7Days(schedule);
         return Result.success("添加成功");
     }
     @PutMapping("update")

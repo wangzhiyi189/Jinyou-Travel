@@ -14,6 +14,13 @@
             <if test="query.status != null">
                 and status = #{query.status}
             </if>
+            <if test="query.departTime != null and query.departTime != ''">
+                AND DATE(depart_time) &gt;= #{query.departTime}
+            </if>
+            <!-- 发车时间范围筛选 - 结束（已转义） -->
+            <if test="query.arriveTime != null and query.arriveTime != ''">
+                AND DATE(depart_time) &lt;= #{query.arriveTime}
+            </if>
             and create_user = #{userId}
         </where>
         ORDER BY create_time DESC
@@ -31,6 +38,7 @@
             <if test="query.status != null">
                 and bus_schedule.status = #{query.status}
             </if>
+
             and bus_schedule.create_user = #{userId}
         </where>
     </select>
@@ -67,7 +75,7 @@
 
     <select id="listVO" resultMap="ScheduleVOResultMap">
         SELECT
-        b.*,
+        t.*,
         line.start_city,
         line.end_city,
         station.station_id,
@@ -75,33 +83,40 @@
         station.lng,
         station.lat,
         station.address
-        FROM
-        -- 核心：这里先把子查询【只查车次】，分页插件只会统计这里！
-        (SELECT DISTINCT bus_schedule.*
-        FROM bus_schedule
-        LEFT JOIN line ON bus_schedule.line_id = line.line_id
+        FROM (
+        SELECT DISTINCT bs.*
+        FROM bus_schedule bs
+        LEFT JOIN line l ON bs.line_id = l.line_id
         <where>
             <if test="query.scheduleName != null and query.scheduleName != ''">
-                and bus_schedule.schedule_name like concat('%', #{query.scheduleName}, '%')
+                AND bs.schedule_name LIKE CONCAT('%', #{query.scheduleName}, '%')
             </if>
             <if test="query.status != null">
-                and bus_schedule.status = #{query.status}
+                AND bs.status = #{query.status}
             </if>
-            and bus_schedule.create_user = #{userId}
+            <if test="query.departTime != null and query.departTime != ''">
+                AND DATE(bs.depart_time) &gt;= #{query.departTime}
+            </if>
+            <if test="query.arriveTime != null and query.arriveTime != ''">
+                AND DATE(bs.depart_time) &lt;= #{query.arriveTime}
+            </if>
+            AND bs.create_user = #{userId}
         </where>
-        ) b
+        ORDER BY bs.depart_time DESC, bs.schedule_id DESC
+        LIMIT #{pageStart}, #{query.pageSize}
+        ) t
 
-        LEFT JOIN line ON b.line_id = line.line_id
+        LEFT JOIN line ON t.line_id = line.line_id
         LEFT JOIN JSON_TABLE(
         line.station_list,
         '$[*]' COLUMNS (
         station_id INT PATH '$',
         idx FOR ORDINALITY
         )
-        ) AS station_idx ON TRUE
-        LEFT JOIN station ON station_idx.station_id = station.station_id
+        ) jt ON TRUE
+        LEFT JOIN station ON jt.station_id = station.station_id
 
-        ORDER BY b.create_time DESC, station_idx.idx
+        ORDER BY t.depart_time DESC, t.schedule_id DESC, jt.idx
     </select>
 
      <!--添加车次-->
@@ -141,4 +156,68 @@
         #{remark},
         #{createUser})
     </insert>
+
+<!--    车次详情-->
+    <select id="details" resultType="com.jinyou.pojo.admin.ticket.Schedule">
+        SELECT
+        -- 1. 车次主表全部信息
+        s.*,
+
+        -- 2. 线路表的 出发城市、到达城市
+        l.start_city,
+        l.end_city,
+
+        -- 3. 关键：按 station_list 顺序查询站点名称，用逗号拼接
+        (
+        SELECT GROUP_CONCAT(st.station_name ORDER BY FIELD(st.station_id, l.station_list))
+        FROM station st
+        WHERE FIND_IN_SET(st.station_id, l.station_list)
+        ) AS stationNames,
+
+        -- 4. 可选：返回站点ID串（方便前端拆分）
+        l.station_list AS stationIds
+
+        FROM bus_schedule s
+        LEFT JOIN line l ON s.line_id = l.line_id
+        WHERE s.schedule_id = #{scheduleId}
+    </select>
+<!--    只修改票价-->
+    <update id="decreaseSeatRemaining">
+        UPDATE bus_schedule
+        SET seat_remaining = seat_remaining - #{ticketCount}
+        WHERE schedule_id = #{scheduleId}
+        AND seat_remaining >= #{ticketCount}
+    </update>
+    <update id="increaseSeatRemaining">
+        UPDATE bus_schedule
+        SET seat_remaining = seat_remaining + #{ticketCount}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+    <!-- 查询今天有效班次 -->
+    <select id="selectTodaySchedule" resultType="com.jinyou.pojo.admin.ticket.Schedule">
+        SELECT * FROM bus_schedule
+        WHERE DATE(depart_time) = #{today}
+        AND status = 1
+    </select>
+
+    <!-- 防重判断 -->
+    <select id="checkExist" resultType="int">
+        SELECT COUNT(*) FROM bus_schedule
+        WHERE DATE(depart_time) = #{targetDate}
+        AND schedule_id = #{scheduleId}
+    </select>
+<!--    查询 30 天前的 scheduleId-->
+    <select id="selectOldScheduleIds" resultType="java.lang.Long">
+        SELECT schedule_id
+        FROM bus_schedule
+        WHERE DATE(depart_time) <![CDATA[ < ]]> #{monthAgo}
+    </select>
+<!--    根据id批量删除-->
+    <delete id="deleteBatchByIds">
+        DELETE FROM bus_schedule
+        WHERE schedule_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
 </mapper>

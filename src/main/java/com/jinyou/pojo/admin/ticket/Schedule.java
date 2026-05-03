@@ -34,7 +34,6 @@ public class Schedule {
     @NonNull
     private Integer seatRemaining;// 剩余座位
     private Integer status;// 状态 0-禁用 1-启用
-    private Integer isRecommend;// 是否推荐 0-否 1-是
 //    private Integer sort;// 排序号 数字越小越靠前
     private LocalDateTime createTime;// 创建时间
     private LocalDateTime updateTime;// 更新时间

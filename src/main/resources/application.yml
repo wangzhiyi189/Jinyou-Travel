@@ -4,7 +4,12 @@ spring:
     url: jdbc:mysql://localhost:3306/jinyou_travel
     username: root
     password: 123456789
-
+  jackson:
+    default-property-inclusion: non_null
+  data:
+    redis:
+      host: localhost
+      port: 6379
 server:
   port: 8081
 
@@ -16,8 +21,15 @@ mybatis-plus:
 
 aliyun:
   oss:
-    accessKeyId: LTAI5t6KpdUTdeKyjXT1PVo5
-    accessKeySecret: LQq8YoGVlNtOSGye9unTkS781ALNvn
+    accessKeyId: 
+    accessKeySecret:
     endpoint: https://oss-cn-beijing.aliyuncs.com
     bucketName: jinyou-travel
     region: cn-beijing
+
+wx:
+  pay:
+    appId: 你的小程序APPID
+    mchId: 你的商户号
+    mchKey: 你的商户密钥
+    notifyUrl: https://你的域名/api/order/wxNotify

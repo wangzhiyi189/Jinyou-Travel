@@ -44,8 +44,8 @@ public class LineServiceImpl implements LineService {
     }
 
     @Override
-    public void updateStatus(Long lineId, Integer status) {
-        lineMapper.updateStatus(lineId, status);
+    public void updateStatus(Long lineId, Integer status , Integer isPopular) {
+        lineMapper.updateStatus(lineId, status,isPopular);
     }
 
     @Override
@@ -53,5 +53,10 @@ public class LineServiceImpl implements LineService {
         Map<String, Object> map = ThreadLocalUtil.get();
         Long userId = (Long) map.get("id");
         return lineMapper.listAll(userId);
+    }
+
+    @Override
+    public Line selectById(Long lineId) {
+        return lineMapper.selectById(lineId);
     }
 }

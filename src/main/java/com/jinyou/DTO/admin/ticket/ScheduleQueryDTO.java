@@ -22,6 +22,8 @@ public class ScheduleQueryDTO {
 
     @ApiModelProperty("状态")
     private Integer status;
-    private String startCity;
-    private String endCity;
+    @ApiModelProperty("发车时间")
+    private String departTime;
+    @ApiModelProperty("到达时间")
+    private String arriveTime;
 }

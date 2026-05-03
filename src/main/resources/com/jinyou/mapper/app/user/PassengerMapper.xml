@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jinyou.mapper.app.user.PassengerMapper">
+    <select id="getDetails" resultType="com.jinyou.pojo.app.user.Passenger">
+        select * from wx_passenger
+        where passenger_id in
+        <foreach collection="passengerIdList" item="sid" open="(" separator="," close=")">
+            #{sid}
+        </foreach>
+
+        <!-- 这里改成数组的 .length 就不报错了！-->
+        <if test="passengerIdList != null and passengerIdList.size() > 0">
+            ORDER BY FIELD(passenger_id,
+            <foreach collection="passengerIdList" item="sid" separator=",">
+                #{sid}
+            </foreach>
+            )
+        </if>
+    </select>
+</mapper>

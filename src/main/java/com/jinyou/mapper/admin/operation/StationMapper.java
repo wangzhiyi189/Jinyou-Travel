@@ -1,10 +1,12 @@
 package com.jinyou.mapper.admin.operation;
 
 import com.jinyou.DTO.admin.operation.StationQueryDTO;
+import com.jinyou.DTO.app.order.StationSimpleDTO;
 import com.jinyou.pojo.admin.operation.Station;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -35,4 +37,7 @@ public interface StationMapper {
 // 根据数组获取站点数据
 
     List<Station> listByStationIds(Integer[] stationIds);
+    List<StationSimpleDTO> listByStationConciseIds(Integer[] stationIds);
+    @Select("select * from station where station_id = #{stationId}  ")
+    Station getDetail(Long stationId);
 }

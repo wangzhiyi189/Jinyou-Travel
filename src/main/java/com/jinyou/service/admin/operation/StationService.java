@@ -21,4 +21,6 @@ public interface StationService {
     List<Station> listAll();
 
     List<Station> listByStationIds(Integer[] stationIds);
+
+    Station getDetail(Long stationId);
 }

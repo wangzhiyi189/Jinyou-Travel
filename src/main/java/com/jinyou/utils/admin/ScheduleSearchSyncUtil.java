@@ -46,6 +46,7 @@ public class ScheduleSearchSyncUtil {
         if("add".equals(type)){
             scheduleSearchMapper.insert(search);
         } else if ("update".equals(type)) {
+            System.out.println("update" + search);
             scheduleSearchMapper.updateSync(search);
         }
     }

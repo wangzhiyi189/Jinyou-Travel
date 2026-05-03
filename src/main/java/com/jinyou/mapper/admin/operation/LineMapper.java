@@ -18,7 +18,9 @@ public interface LineMapper {
             "station_list, " +
             "start_city, " +
             "end_city, " +
+            "price, " +
             "status, " +
+            "is_popular, " +
             "create_time, " +
             "remark, " +
             "create_user" +
@@ -27,7 +29,9 @@ public interface LineMapper {
             "#{stationList}, " +
             "#{startCity}, " +
             "#{endCity}, " +
+            "#{price}, " +
             "#{status}, " +
+            "#{isPopular}, " +
             "#{createTime}, " +
             "#{remark}, " +
             "#{createUser}" +
@@ -35,14 +39,14 @@ public interface LineMapper {
     void add(Line line);
 
 //    修改
-    @Insert("update line set " + "line_name = #{lineName}, station_list = #{stationList} , start_city = #{startCity}, end_city = #{endCity}, status = #{status}, remark = #{remark}, create_user = #{createUser}  where line_id = #{lineId}")
+    @Insert("update line set " + "line_name = #{lineName}, station_list = #{stationList} , start_city = #{startCity}, end_city = #{endCity}, price = #{price}, status = #{status}, is_popular = #{isPopular}, remark = #{remark}, create_user = #{createUser}  where line_id = #{lineId}")
     void update(Line line);
 // 删除
     @Insert("delete from line where line_id = #{id}")
     void delete(Long id);
 
-    @Insert("update line set status = #{status} where line_id = #{lineId}")
-    void updateStatus(Long lineId, Integer status);
+    @Insert("update line set status = #{status} , is_popular = #{isPopular} where line_id = #{lineId}")
+    void updateStatus(Long lineId, Integer status , Integer isPopular);
 
     List<Line> listAll(Long userId);
 

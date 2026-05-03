@@ -23,6 +23,9 @@ public class LineQueryDTO {
     @ApiModelProperty("状态")
     private Integer status;
 
+    @ApiModelProperty("是否热门")
+    private Integer isPopular;
+
     @ApiModelProperty("出发城市，模糊匹配")
     private String startCity;
 

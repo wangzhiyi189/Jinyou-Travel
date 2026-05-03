@@ -26,7 +26,9 @@
             <if test="query.status != null">
                 and status = #{query.status}
             </if>
-
+            <if test="query.isPopular != null">
+                and is_popular = #{query.isPopular}
+            </if>
             <!-- 当前登录人ID -->
             and create_user = #{userId}
         </where>

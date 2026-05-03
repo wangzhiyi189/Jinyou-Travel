@@ -35,7 +35,12 @@ public interface ScheduleSearchMapper {
     // 更新余票（购票后）
     int updateSeatRemaining(@Param("scheduleId") Long scheduleId,
                             @Param("seatRemaining") Integer seatRemaining);
+    // 只扣减余票，不改动任何其他字段
+    int decreaseSeatRemaining(@Param("scheduleId") Long scheduleId,
+                              @Param("ticketCount") Integer ticketCount);
 
+    int increaseSeatRemaining(@Param("scheduleId") Long scheduleId,
+                              @Param("ticketCount") Integer ticketCount);
     // 更新票价
     int updatePrice(@Param("scheduleId") Long scheduleId,
                     @Param("price") BigDecimal price);
@@ -54,4 +59,8 @@ public interface ScheduleSearchMapper {
     // 定时任务：删除30天前历史数据
     int deleteOldDataBefore30Days();
 
+    /**
+     * 根据 ID 批量删除
+     */
+    void deleteBatchByIds(@Param("ids") List<Long> ids);
 }

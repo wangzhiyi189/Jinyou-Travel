@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 // 线路
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -21,7 +22,10 @@ public class Line {
     private String startCity;//出发城市
     @NonNull
     private String endCity;//到达城市
+    @NonNull
+    private BigDecimal price;// 票价
     private Integer status;//状态 0-禁用 1-启用
     private LocalDateTime createTime;//创建时间
     private String remark;//备注
+    private Integer isPopular;//状态 0-不热门 1-热门
 }

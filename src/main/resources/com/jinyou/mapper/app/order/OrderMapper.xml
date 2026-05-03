@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jinyou.mapper.app.order.OrderMapper">
+
+    <!-- 新增订单 -->
+    <insert id="insertOrder">
+        INSERT INTO wx_order (
+        wx_order_id,
+        order_no,
+        create_user,
+        schedule_id,
+        start_station,
+        end_station,
+        depart_time,
+        arrive_time,
+        board_point_id,
+        board_point_name,
+        ticket_count,
+        unit_price,
+        total_amount,
+        passenger_ids,
+        passenger_snapshot,
+        contact_phone,
+        remark,
+        order_status,
+        pay_status,
+        pay_time,
+        expire_time,
+        create_time,
+        update_time
+        ) VALUES (
+        #{wxOrderId},
+        #{orderNo},
+        #{createUser},
+        #{scheduleId},
+        #{startStation},
+        #{endStation},
+        #{departTime},
+        #{arriveTime},
+        #{boardPointId},
+        #{boardPointName},
+        #{ticketCount},
+        #{unitPrice},
+        #{totalAmount},
+        #{passengerIds},
+        #{passengerSnapshot},
+        #{contactPhone},
+        #{remark},
+        #{orderStatus},
+        #{payStatus},
+        #{payTime},
+        #{expireTime},
+        #{createTime},
+        #{updateTime}
+        )
+    </insert>
+    <!-- 根据条件查询订单列表 -->
+<!--    <select id="selectList" resultType="com.jinyou.pojo.app.order.WxOrder">-->
+<!--        SELECT * FROM wx_order-->
+<!--        <where>-->
+<!--            <if test="query.status != null">-->
+<!--                AND order_status = #{query.status}-->
+<!--            </if>-->
+<!--            and create_user = #{userId}-->
+<!--        </where>-->
+<!--        ORDER BY create_time DESC-->
+<!--    </select>-->
+    <select id="selectList" resultType="com.jinyou.pojo.app.order.WxOrder">
+        SELECT
+        o.*,
+        l.station_list,
+        (
+            SELECT JSON_ARRAYAGG(
+                JSON_OBJECT('stationId', s.station_id, 'stationName', s.station_name)
+            )
+                FROM station s
+                WHERE FIND_IN_SET(s.station_id, REPLACE(REPLACE(l.station_list, '[', ''), ']', ''))
+            ) AS station_info
+        FROM wx_order o
+        LEFT JOIN bus_schedule s ON o.schedule_id = s.schedule_id
+        LEFT JOIN line l ON s.line_id = l.line_id
+        WHERE o.create_user = #{userId}
+        <if test="query.status != null">
+            AND o.order_status = #{query.status}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+<!--    查询待出行订单-->
+    <select id="selectPayList" resultType="com.jinyou.pojo.app.order.WxOrder">
+        SELECT * FROM wx_order
+        WHERE order_status = 1  <!-- 待出行 -->
+        AND depart_time &lt;= NOW()
+    </select>
+    <!-- 更新订单（只更新你要改的字段） -->
+<!--    <update id="updateById">-->
+<!--        UPDATE wx_order-->
+<!--        <set>-->
+<!--            <if test="orderStatus != null">order_status = #{orderStatus},</if>-->
+<!--            <if test="updateTime != null">update_time = #{updateTime}</if>-->
+<!--        </set>-->
+<!--        WHERE wx_order_id = #{wxOrderId}-->
+<!--    </update>-->
+
+    <select id="selectListByExpire" resultType="com.jinyou.pojo.app.order.WxOrder">
+        SELECT * FROM wx_order
+        WHERE order_status = 0
+        AND expire_time &lt;= #{now}
+    </select>
+
+    <update id="updateById">
+        UPDATE wx_order
+        SET order_status = #{orderStatus},
+        update_time = #{updateTime}
+        WHERE wx_order_id = #{wxOrderId}
+        AND create_user = #{userId}
+    </update>
+<!--    只修改订单状态-->
+    <update id="updateOrderStatus">
+        UPDATE wx_order
+        SET order_status = #{orderStatus},
+        update_time = NOW()
+        WHERE order_no = #{orderNo}
+    </update>
+    <select id="selectByOrderNo" resultType="com.jinyou.pojo.app.order.WxOrder">
+        SELECT
+        o.*,
+        l.station_list,
+        s.plate_number,<!-- 车牌 -->
+        s.vehicle_type,<!-- 车型 -->
+        -- 和上面列表完全一样的 JSON 结构
+        (SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+        'stationId', s.station_id,
+        'stationName', s.station_name
+        )
+        )
+        FROM station s
+        WHERE FIND_IN_SET(s.station_id, REPLACE(REPLACE(l.station_list, '[', ''), ']', ''))
+        ) AS station_info
+        FROM wx_order o
+        LEFT JOIN bus_schedule s ON o.schedule_id = s.schedule_id
+        LEFT JOIN line l ON s.line_id = l.line_id
+        WHERE o.order_no = #{orderNo}
+    </select>
+
+    <select id="getUnPayOrder" resultType="com.jinyou.pojo.app.order.WxOrder">
+        SELECT order_no
+        FROM wx_order
+        WHERE create_user = #{userId}
+        AND schedule_id = #{scheduleId}
+        AND order_status = 0
+        AND expire_time > NOW()
+        LIMIT 1
+    </select>
+</mapper>

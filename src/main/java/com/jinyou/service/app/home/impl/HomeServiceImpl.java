@@ -3,6 +3,7 @@ package com.jinyou.service.app.home.impl;
 import com.jinyou.mapper.app.home.HomeMapper;
 import com.jinyou.pojo.admin.home.Banner;
 import com.jinyou.pojo.admin.home.TopBanner;
+import com.jinyou.pojo.admin.operation.Line;
 import com.jinyou.service.app.home.HomeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,5 +22,10 @@ public class HomeServiceImpl implements HomeService {
     @Override
     public List<TopBanner> listTop() {
         return homeMapper.listTop();
+    }
+
+    @Override
+    public List<Line> listPopular() {
+        return homeMapper.listPopular();
     }
 }

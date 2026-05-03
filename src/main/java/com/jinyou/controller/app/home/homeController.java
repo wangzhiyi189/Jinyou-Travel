@@ -3,6 +3,7 @@ package com.jinyou.controller.app.home;
 import com.jinyou.pojo.Result;
 import com.jinyou.pojo.admin.home.Banner;
 import com.jinyou.pojo.admin.home.TopBanner;
+import com.jinyou.pojo.admin.operation.Line;
 import com.jinyou.service.app.home.HomeService;
 import com.jinyou.vo.app.BannerVO;
 import com.jinyou.vo.app.TopBannerVO;
@@ -45,5 +46,11 @@ public class homeController {
             return vo;
         }).collect(Collectors.toList());
         return Result.success(voList);
+    }
+
+    @GetMapping("popular")
+    public Result<List<Line>> popular(){
+        List<Line> popularList = homeService.listPopular();
+        return Result.success(popularList);
     }
 }

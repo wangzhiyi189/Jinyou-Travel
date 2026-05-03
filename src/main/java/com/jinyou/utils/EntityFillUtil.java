@@ -35,7 +35,7 @@ public class EntityFillUtil {
 
         // 2. （可选）填充更新人ID，若需要可放开
          Map<String, Object> map = ThreadLocalUtil.get();
-        Long userId = (Long) map.get("id");
+         Long userId = (Long) map.get("id");
          setFieldValue(entity, "createUser", userId);
     }
 
@@ -48,8 +48,18 @@ public class EntityFillUtil {
             java.lang.reflect.Field field = entity.getClass().getDeclaredField(fieldName);
             // 打破访问权限
             field.setAccessible(true);
+            Class<?> fieldType = field.getType();
+            Object finalValue = value;
+
+            if (value instanceof Long) {
+                Long longVal = (Long) value;
+                if (fieldType == Integer.class || fieldType == int.class) {
+                    // 数据库实体是 Integer → 自动转成 Integer
+                    finalValue = longVal.intValue();
+                }
+            }
             // 赋值
-            field.set(entity, value);
+            field.set(entity, finalValue);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             // 字段不存在时静默跳过（兼容不同实体的字段差异）
             System.err.printf("字段 %s 不存在，跳过填充%n", fieldName);

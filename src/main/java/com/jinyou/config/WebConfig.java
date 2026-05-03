@@ -35,14 +35,16 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/admin/auth/**",
                         "/app/home/**",
-                        "/app/ticket/list"
+                        "/app/ticket/list",
+                        "/app/ticket/details/**",
+                        "/app/user/wxLogin"
                 );
     }
     // 跨域配置（保留你原来的，但我优化了重复写法）
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns("http://localhost:5666","http://localhost:5173")
+                .allowedOriginPatterns("http://localhost:5666","http://localhost:5667","http://localhost:5173")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
@@ -57,6 +59,7 @@ public class WebConfig implements WebMvcConfigurer {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOriginPattern("http://localhost:5666");
+        config.addAllowedOriginPattern("http://localhost:5667");
         config.addAllowedOriginPattern("http://localhost:5173");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");

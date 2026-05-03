@@ -17,7 +17,9 @@ public interface LineService {
 
     void delete(Long id);
 
-    void updateStatus(Long lineId, Integer status) ;
+    void updateStatus(Long lineId, Integer status , Integer isPopular) ;
 
     List<Line> listAll();
+
+    Line selectById(Long lineId);
 }

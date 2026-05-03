@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jinyou.mapper.app.ticket.TicketMapper">
+    <!-- 必加！用来封装 stationList 集合 -->
+    <resultMap id="ScheduleVOResultMap" type="com.jinyou.vo.admin.ScheduleVO">
+        <id column="schedule_id" property="scheduleId"/>
+        <result column="create_user" property="createUser"/>
+        <result column="schedule_name" property="scheduleName"/>
+        <result column="line_id" property="lineId"/>
+        <result column="depart_time" property="departTime"/>
+        <result column="arrive_time" property="arriveTime"/>
+        <result column="duration" property="duration"/>
+        <result column="plate_number" property="plateNumber"/>
+        <result column="vehicle_type" property="vehicleType"/>
+        <result column="price" property="price"/>
+        <result column="seat_total" property="seatTotal"/>
+        <result column="seat_remaining" property="seatRemaining"/>
+        <result column="status" property="status"/>
+        <result column="is_recommend" property="isRecommend"/>
+        <result column="sort" property="sort"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="remark" property="remark"/>
+        <result column="start_city" property="startCity"/>
+        <result column="end_city" property="endCity"/>
+        <collection property="stationList" ofType="com.jinyou.vo.admin.ScheduleVO$StationInfo">
+            <id column="station_id" property="stationId"/>
+            <result column="station_name" property="stationName"/>
+            <result column="lng" property="lng"/>
+            <result column="lat" property="lat"/>
+            <result column="address" property="address"/>
+        </collection>
+    </resultMap>
+    <!--    车次详情-->
+    <select id="details" resultMap="ScheduleVOResultMap">
+        SELECT
+        b.*,
+        line.start_city,
+        line.end_city,
+        station.station_id,
+        station.station_name,
+        station.lng,
+        station.lat,
+        station.address
+        FROM
+        -- 这里只查 单个车次
+        (SELECT * FROM bus_schedule WHERE schedule_id = #{scheduleId}) b
+
+        LEFT JOIN line ON b.line_id = line.line_id
+        LEFT JOIN JSON_TABLE(
+        line.station_list,
+        '$[*]' COLUMNS (
+        station_id INT PATH '$',
+        idx FOR ORDINALITY
+        )
+        ) AS station_idx ON TRUE
+        LEFT JOIN station ON station_idx.station_id = station.station_id
+
+        ORDER BY station_idx.idx
+    </select>
+</mapper>

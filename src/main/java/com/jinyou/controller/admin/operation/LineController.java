@@ -50,10 +50,10 @@ public class LineController {
             return Result.error("线路ID不能为空");
         }
         Integer status = params.get("status");
-        lineService.updateStatus(lineId,status);
+        Integer isPopular = params.get("isPopular");
+        lineService.updateStatus(lineId,status,isPopular);
         return Result.success("修改成功");
     }
-
     // 查询所有线路 返回指定字段
     @GetMapping("/optionList")
     public Result<List<LineVO>> optionList() {
